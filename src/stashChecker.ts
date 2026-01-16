@@ -700,7 +700,7 @@ export async function runStashChecker() {
                 }
             });
 
-            // Variation 4: Smart bracket/slash filtering with metadata heuristic
+            // Variation 4: Smart bracket filtering with comma heuristic
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
                 urlSelector: null,
                 titleSelector: e => {
@@ -713,37 +713,75 @@ export async function runStashChecker() {
                     // Extract scene name after " - " or " – "
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
-                        let extracted = dashMatch[1].trim();
-
-                        // Check for " / " separator (often separates title from date/metadata)
-                        // Example: "Title / 03.12.2016" -> "Title"
-                        if (extracted.includes(' / ')) {
-                            const slashParts = extracted.split(' / ').map(p => p.trim());
-                            // Take the first part before the slash (usually the title)
-                            extracted = slashParts[0];
-                            console.log('[pornolab.net] Trying smart slash filter:', extracted);
-                            return extracted;
-                        }
+                        const extracted = dashMatch[1].trim();
 
                         // Check for any (), [], or {} which may indicate extra info
                         // and split into multiple parts if found
                         if (/[()[\]{}]/.test(extracted)) {
                             const parts = extracted.split(/[\(\)\[\]\{\}]/).map(part => part.trim()).filter(part => part);
 
-                            // Return the part with the least metadata indicators (commas and slashes)
-                            // Metadata typically has more commas/slashes than titles
+                            // Return the part with the least commas (most likely the actual title)
+                            // But if no commas, return the largest part
                             let bestPart = parts[0];
                             for (const part of parts) {
-                                const partMetadataScore = (part.split(',').length - 1) + (part.split('/').length - 1);
-                                const bestPartMetadataScore = (bestPart.split(',').length - 1) + (bestPart.split('/').length - 1);
-                                const hasLessMetadata = partMetadataScore < bestPartMetadataScore;
-                                const hasSameMetadataButLonger = partMetadataScore === bestPartMetadataScore && part.length > bestPart.length;
+                                const partCommaCount = part.split(',').length;
+                                const bestPartCommaCount = bestPart.split(',').length;
+                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
+                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
 
-                                if (hasLessMetadata || hasSameMetadataButLonger) {
+                                if (hasFewerCommas || hasSameCommasButLonger) {
                                     bestPart = part;
                                 }
                             }
                             console.log('[pornolab.net] Trying smart bracket filter:', bestPart);
+                            return bestPart;
+                        }
+                    }
+                    return null;
+                }
+            });
+
+            // Variation 5: Date and separator filtering with comma heuristic
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                urlSelector: null,
+                titleSelector: e => {
+                    const fullTitle = e.textContent?.trim();
+                    if (!fullTitle) return null;
+
+                    // Remove brackets at start and end
+                    let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+
+                    // Try from parentheses first, fall back to cleaned
+                    let extracted = cleaned;
+                    const parenMatch = cleaned.match(/\(\s*([^)]+?)\s*\)/);
+                    if (parenMatch) {
+                        extracted = parenMatch[1].trim();
+                    }
+
+                    // Split on common separators: / | - (but not hyphen in middle of words)
+                    const parts = extracted.split(/\s*[\/\|]\s*/).map(part => part.trim()).filter(part => part);
+
+                    if (parts.length > 1) {
+                        // Filter out parts that look like dates
+                        const datePattern = /^\d{1,2}[.\-\/]\d{1,2}[.\-\/]\d{2,4}$/; // DD.MM.YYYY, DD-MM-YY, etc.
+                        const yearPattern = /^\d{4}$/; // Just a year like "2024"
+
+                        const nonDateParts = parts.filter(part => !datePattern.test(part) && !yearPattern.test(part));
+
+                        if (nonDateParts.length > 0) {
+                            // Use comma heuristic on remaining parts
+                            let bestPart = nonDateParts[0];
+                            for (const part of nonDateParts) {
+                                const partCommaCount = part.split(',').length;
+                                const bestPartCommaCount = bestPart.split(',').length;
+                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
+                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
+
+                                if (hasFewerCommas || hasSameCommasButLonger) {
+                                    bestPart = part;
+                                }
+                            }
+                            console.log('[pornolab.net] Trying date/separator filter:', bestPart);
                             return bestPart;
                         }
                     }

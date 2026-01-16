@@ -67,6 +67,7 @@ export default {
 		"*://playboyplus.com/*",
         "*://pmvhaven.com/*",
         "*://pmvstash.org/*",
+        "*://pornolab.net/*",
         "*://r18.dev/*",
         "*://shemalestardb.com/*",
         "*://stashdb.org/*",

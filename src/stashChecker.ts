@@ -637,6 +637,12 @@ export async function runStashChecker() {
             check(Target.Studio, "a[href^='/creator/'] .v-chip__content", {observe: true});
             break;
         }
+        case "pornolab.net": {
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                titleSelector: e => e.textContent?.trim()
+            });
+            break;
+        }
         case "fansdb.cc":
         case "fansdb.xyz":
         case "javstash.org":

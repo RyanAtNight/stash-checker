@@ -644,36 +644,31 @@ export async function runStashChecker() {
                 // Title selector uses EQUALS (exact match) - fallback only
                 titleSelector: e => {
                     const fullTitle = e.textContent?.trim();
+                    console.log('[pornolab.net] Raw title:', fullTitle);
+
                     if (!fullTitle) return null;
 
                     // Format examples:
                     // [Studio] Performer - Scene Name [metadata]
-                    // [Studio] Performer ( Scene Name )[metadata]
                     // [Studio] Scene Name [metadata]
+                    // Studio / Performer - Scene Name (metadata)
 
                     // Remove content in square brackets at start and end
                     let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+                    // Remove content in parentheses at end
+                    cleaned = cleaned.replace(/\s*\([^)]+\)\s*$/, '');
+                    console.log('[pornolab.net] After cleaning:', cleaned);
 
                     // Try to extract scene name after " - " or " – "
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
-                        return dashMatch[1].trim();
+                        const extracted = dashMatch[1].trim();
+                        console.log('[pornolab.net] Extracted scene name:', extracted);
+                        return extracted;
                     }
-
-                    // Try to extract scene name from parentheses: "Performer ( Scene Name )"
-                    const parenMatch = cleaned.match(/\(\s*([^)]+?)\s*\)\s*$/);
-                    if (parenMatch) {
-                        const extracted = parenMatch[1].trim();
-                        // Make sure it doesn't look like year-only metadata like "(2024)"
-                        if (!/^\d{4}$/.test(extracted)) {
-                            return extracted;
-                        }
-                    }
-
-                    // Remove trailing parentheses that look like metadata (year, single word, etc.)
-                    cleaned = cleaned.replace(/\s*\([^)]+\)\s*$/, '');
 
                     // Otherwise return cleaned title
+                    console.log('[pornolab.net] Using cleaned title as-is:', cleaned.trim());
                     return cleaned.trim();
                 }
             });

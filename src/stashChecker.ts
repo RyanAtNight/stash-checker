@@ -639,7 +639,26 @@ export async function runStashChecker() {
         }
         case "pornolab.net": {
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
-                titleSelector: e => e.textContent?.trim()
+                titleSelector: e => {
+                    const fullTitle = e.textContent?.trim();
+                    if (!fullTitle) return null;
+
+                    // Format: [Studio] Performer - Scene Name [metadata]
+                    // Remove studio prefix [Studio]
+                    const withoutStudio = fullTitle.replace(/^\[[^\]]+\]\s*/, '');
+                    // Remove metadata suffix [year, tags, ...]
+                    const withoutMetadata = withoutStudio.replace(/\s*\[[^\]]+\]\s*$/, '');
+
+                    // Extract scene name after " - "
+                    const parts = withoutMetadata.split(' - ');
+                    if (parts.length >= 2) {
+                        // Return everything after the first " - "
+                        return parts.slice(1).join(' - ').trim();
+                    }
+
+                    // Otherwise return the whole thing
+                    return withoutMetadata.trim();
+                }
             });
             break;
         }

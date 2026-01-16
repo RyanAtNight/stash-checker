@@ -638,38 +638,65 @@ export async function runStashChecker() {
             break;
         }
         case "pornolab.net": {
+            // Try URL matching first (fuzzy INCLUDES substring match)
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
-                // URL selector uses INCLUDES (fuzzy substring match) - best option
                 urlSelector: closestUrl,
-                // Title selector uses EQUALS (exact match) - fallback only
+                titleSelector: null  // Don't try title matching in this check
+            });
+
+            // Try multiple title variations (exact EQUALS match)
+            // Variation 1: Scene name after dash
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                urlSelector: null,
                 titleSelector: e => {
                     const fullTitle = e.textContent?.trim();
-                    console.log('[pornolab.net] Raw title:', fullTitle);
-
                     if (!fullTitle) return null;
 
-                    // Format examples:
-                    // [Studio] Performer - Scene Name [metadata]
-                    // [Studio] Scene Name [metadata]
-                    // Studio / Performer - Scene Name (metadata)
-
-                    // Remove content in square brackets at start and end
+                    // Remove brackets at start and end
                     let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
-                    // Remove content in parentheses at end
-                    cleaned = cleaned.replace(/\s*\([^)]+\)\s*$/, '');
-                    console.log('[pornolab.net] After cleaning:', cleaned);
 
-                    // Try to extract scene name after " - " or " – "
+                    // Extract scene name after " - " or " – "
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
                         const extracted = dashMatch[1].trim();
-                        console.log('[pornolab.net] Extracted scene name:', extracted);
+                        console.log('[pornolab.net] Trying title after dash:', extracted);
                         return extracted;
                     }
+                    return null;
+                }
+            });
 
-                    // Otherwise return cleaned title
-                    console.log('[pornolab.net] Using cleaned title as-is:', cleaned.trim());
+            // Variation 2: Cleaned title without brackets
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                urlSelector: null,
+                titleSelector: e => {
+                    const fullTitle = e.textContent?.trim();
+                    if (!fullTitle) return null;
+
+                    let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+                    console.log('[pornolab.net] Trying cleaned title:', cleaned.trim());
                     return cleaned.trim();
+                }
+            });
+
+            // Variation 3: Scene name from parentheses (e.g., "Performer ( Scene Name )")
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                urlSelector: null,
+                titleSelector: e => {
+                    const fullTitle = e.textContent?.trim();
+                    if (!fullTitle) return null;
+
+                    let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+                    const parenMatch = cleaned.match(/\(\s*([^)]+?)\s*\)/);
+                    if (parenMatch) {
+                        const extracted = parenMatch[1].trim();
+                        // Avoid year-only matches like "(2024)"
+                        if (!/^\d{4}$/.test(extracted)) {
+                            console.log('[pornolab.net] Trying title from parentheses:', extracted);
+                            return extracted;
+                        }
+                    }
+                    return null;
                 }
             });
             break;

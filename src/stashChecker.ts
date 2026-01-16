@@ -645,7 +645,7 @@ export async function runStashChecker() {
             });
 
             // Try multiple title variations (exact EQUALS match)
-            // Variation 1: Scene name after dash
+            // Variation 1: Scene name after dash (simple extraction)
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
                 urlSelector: null,
                 titleSelector: e => {
@@ -659,30 +659,7 @@ export async function runStashChecker() {
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
                         const extracted = dashMatch[1].trim();
-
-                        // Check for any (), [], or {} which may indicate extra info
-                        // and split into multiple parts if found
-                        if (/[()[\]{}]/.test(extracted)) {
-                            const parts = extracted.split(/[\(\)\[\]\{\}]/).map(part => part.trim()).filter(part => part);
-
-                            // Return the part with the least commas (most likely the actual title)
-                            // But if no commas, return the largest part
-                            let bestPart = parts[0];
-                            for (const part of parts) {
-                                const partCommaCount = part.split(',').length;
-                                const bestPartCommaCount = bestPart.split(',').length;
-                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
-                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
-
-                                if (hasFewerCommas || hasSameCommasButLonger) {
-                                    bestPart = part;
-                                }
-                            }
-                            console.log('[pornolab.net] Trying title after dash with brackets split:', bestPart);
-                            return bestPart;
-                        }
-
-                        console.log('[pornolab.net] Trying title after dash:', extracted);
+                        console.log('[pornolab.net] Trying simple title after dash:', extracted);
                         return extracted;
                     }
                     return null;
@@ -717,6 +694,47 @@ export async function runStashChecker() {
                         if (!/^\d{4}$/.test(extracted)) {
                             console.log('[pornolab.net] Trying title from parentheses:', extracted);
                             return extracted;
+                        }
+                    }
+                    return null;
+                }
+            });
+
+            // Variation 4: Smart bracket filtering with comma heuristic
+            check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                urlSelector: null,
+                titleSelector: e => {
+                    const fullTitle = e.textContent?.trim();
+                    if (!fullTitle) return null;
+
+                    // Remove brackets at start and end
+                    let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+
+                    // Extract scene name after " - " or " – "
+                    const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
+                    if (dashMatch) {
+                        const extracted = dashMatch[1].trim();
+
+                        // Check for any (), [], or {} which may indicate extra info
+                        // and split into multiple parts if found
+                        if (/[()[\]{}]/.test(extracted)) {
+                            const parts = extracted.split(/[\(\)\[\]\{\}]/).map(part => part.trim()).filter(part => part);
+
+                            // Return the part with the least commas (most likely the actual title)
+                            // But if no commas, return the largest part
+                            let bestPart = parts[0];
+                            for (const part of parts) {
+                                const partCommaCount = part.split(',').length;
+                                const bestPartCommaCount = bestPart.split(',').length;
+                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
+                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
+
+                                if (hasFewerCommas || hasSameCommasButLonger) {
+                                    bestPart = part;
+                                }
+                            }
+                            console.log('[pornolab.net] Trying smart bracket filter:', bestPart);
+                            return bestPart;
                         }
                     }
                     return null;

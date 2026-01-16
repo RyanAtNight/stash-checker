@@ -659,6 +659,29 @@ export async function runStashChecker() {
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
                         const extracted = dashMatch[1].trim();
+
+                        // Check for any (), [], or {} which may indicate extra info
+                        // and split into multiple parts if found
+                        if (/[()[\]{}]/.test(extracted)) {
+                            const parts = extracted.split(/[\(\)\[\]\{\}]/).map(part => part.trim()).filter(part => part);
+
+                            // Return the part with the least commas (most likely the actual title)
+                            // But if no commas, return the largest part
+                            let bestPart = parts[0];
+                            for (const part of parts) {
+                                const partCommaCount = part.split(',').length;
+                                const bestPartCommaCount = bestPart.split(',').length;
+                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
+                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
+
+                                if (hasFewerCommas || hasSameCommasButLonger) {
+                                    bestPart = part;
+                                }
+                            }
+                            console.log('[pornolab.net] Trying title after dash with brackets split:', bestPart);
+                            return bestPart;
+                        }
+
                         console.log('[pornolab.net] Trying title after dash:', extracted);
                         return extracted;
                     }

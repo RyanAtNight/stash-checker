@@ -639,25 +639,31 @@ export async function runStashChecker() {
         }
         case "pornolab.net": {
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
+                // URL selector uses INCLUDES (fuzzy substring match) - best option
+                urlSelector: closestUrl,
+                // Title selector uses EQUALS (exact match) - fallback only
                 titleSelector: e => {
                     const fullTitle = e.textContent?.trim();
                     if (!fullTitle) return null;
 
-                    // Format: [Studio] Performer - Scene Name [metadata]
-                    // Remove studio prefix [Studio]
-                    const withoutStudio = fullTitle.replace(/^\[[^\]]+\]\s*/, '');
-                    // Remove metadata suffix [year, tags, ...]
-                    const withoutMetadata = withoutStudio.replace(/\s*\[[^\]]+\]\s*$/, '');
+                    // Format examples:
+                    // [Studio] Performer - Scene Name [metadata]
+                    // [Studio] Scene Name [metadata]
+                    // Studio / Performer - Scene Name (metadata)
 
-                    // Extract scene name after " - "
-                    const parts = withoutMetadata.split(' - ');
-                    if (parts.length >= 2) {
-                        // Return everything after the first " - "
-                        return parts.slice(1).join(' - ').trim();
+                    // Remove content in square brackets at start and end
+                    let cleaned = fullTitle.replace(/^\[[^\]]+\]\s*/, '').replace(/\s*\[[^\]]+\]\s*$/, '');
+                    // Remove content in parentheses at end
+                    cleaned = cleaned.replace(/\s*\([^)]+\)\s*$/, '');
+
+                    // Try to extract scene name after " - " or " – "
+                    const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
+                    if (dashMatch) {
+                        return dashMatch[1].trim();
                     }
 
-                    // Otherwise return the whole thing
-                    return withoutMetadata.trim();
+                    // Otherwise return cleaned title
+                    return cleaned.trim();
                 }
             });
             break;

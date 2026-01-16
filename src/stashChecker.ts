@@ -700,7 +700,7 @@ export async function runStashChecker() {
                 }
             });
 
-            // Variation 4: Smart bracket filtering with comma heuristic
+            // Variation 4: Smart bracket/slash filtering with metadata heuristic
             check(Target.Scene, "a.topictitle.tLink[href*='viewtopic.php']", {
                 urlSelector: null,
                 titleSelector: e => {
@@ -713,23 +713,33 @@ export async function runStashChecker() {
                     // Extract scene name after " - " or " – "
                     const dashMatch = cleaned.match(/(?:\s+[-–]\s+)(.+?)$/);
                     if (dashMatch) {
-                        const extracted = dashMatch[1].trim();
+                        let extracted = dashMatch[1].trim();
+
+                        // Check for " / " separator (often separates title from date/metadata)
+                        // Example: "Title / 03.12.2016" -> "Title"
+                        if (extracted.includes(' / ')) {
+                            const slashParts = extracted.split(' / ').map(p => p.trim());
+                            // Take the first part before the slash (usually the title)
+                            extracted = slashParts[0];
+                            console.log('[pornolab.net] Trying smart slash filter:', extracted);
+                            return extracted;
+                        }
 
                         // Check for any (), [], or {} which may indicate extra info
                         // and split into multiple parts if found
                         if (/[()[\]{}]/.test(extracted)) {
                             const parts = extracted.split(/[\(\)\[\]\{\}]/).map(part => part.trim()).filter(part => part);
 
-                            // Return the part with the least commas (most likely the actual title)
-                            // But if no commas, return the largest part
+                            // Return the part with the least metadata indicators (commas and slashes)
+                            // Metadata typically has more commas/slashes than titles
                             let bestPart = parts[0];
                             for (const part of parts) {
-                                const partCommaCount = part.split(',').length;
-                                const bestPartCommaCount = bestPart.split(',').length;
-                                const hasFewerCommas = partCommaCount < bestPartCommaCount;
-                                const hasSameCommasButLonger = partCommaCount === bestPartCommaCount && part.length > bestPart.length;
+                                const partMetadataScore = (part.split(',').length - 1) + (part.split('/').length - 1);
+                                const bestPartMetadataScore = (bestPart.split(',').length - 1) + (bestPart.split('/').length - 1);
+                                const hasLessMetadata = partMetadataScore < bestPartMetadataScore;
+                                const hasSameMetadataButLonger = partMetadataScore === bestPartMetadataScore && part.length > bestPart.length;
 
-                                if (hasFewerCommas || hasSameCommasButLonger) {
+                                if (hasLessMetadata || hasSameMetadataButLonger) {
                                     bestPart = part;
                                 }
                             }

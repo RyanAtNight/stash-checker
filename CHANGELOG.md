@@ -1,6 +1,18 @@
 
 ## [WIP]
 
+## [1.2.4]
+
+- Add IMDB
+
+## [1.2.3]
+
+- Add version string to settings
+- Add Puffynetwork [#82]
+- Add PlayboyPlus [#79],[#80]
+- Improve Hegre [#79]
+- Fix Manyvids [#81]
+
 ## [1.2.2]
 
 - Setting for date formatting for release date and birthdate

@@ -1,4 +1,4 @@
-import meta from "./package.json" with { type: "json" };
+import packageJson from "./package.json" with { type: "json" };
 
 const metart = [
     "*://www.alsscan.com/*",
@@ -39,14 +39,14 @@ const wow = [
 
 export default {
     name: "Stash Checker",
-    description: meta.description,
+    description: packageJson.description,
     icon: "https://docs.stashapp.cc/assets/images/favicon.ico",
-    version: meta.version,
-    license: meta.license,
-    author: meta.author.name,
-    source: meta.repository.url,
-    updateURL: meta.repository.url + "/releases/latest/download/index.prod.meta.js",
-    downloadURL: meta.repository.url + "/releases/latest/download/index.prod.user.js",
+    version: packageJson.version,
+    license: packageJson.license,
+    author: packageJson.author.name,
+    source: packageJson.repository.url,
+    updateURL: packageJson.repository.url + "/releases/latest/download/index.prod.meta.js",
+    downloadURL: packageJson.repository.url + "/releases/latest/download/index.prod.user.js",
     match: [
         "*://adultanime.dbsearch.net/*",
         "*://coomer.st/*",
@@ -62,12 +62,14 @@ export default {
         "*://javstash.org/*",
         "*://kemono.cr/*",
 		"*://members.playboyplus.com/*",
+        "*://members.puffynetwork.com/*",
         "*://onlyfans.com/*",
         "*://oreno3d.com/*",
 		"*://playboyplus.com/*",
         "*://pmvhaven.com/*",
         "*://pmvstash.org/*",
         "*://pornolab.net/*",
+        "*://puffynetwork.com/*",
         "*://r18.dev/*",
         "*://shemalestardb.com/*",
         "*://stashdb.org/*",
@@ -83,6 +85,7 @@ export default {
 		"*://www.freeones.com/*",
         "*://www.hegre.com/*",
         "*://www.iafd.com/*",
+        "*://www.imdb.com/*",
         "*://www.indexxx.com/*",
         "*://www.iwara.tv/*",
         "*://www.javlibrary.com/*",
@@ -91,6 +94,7 @@ export default {
         "*://www.playboyplus.com/*",
 		"*://www.pornhub.com/*",
         "*://www.pornteengirl.com/*",
+        "*://www.puffynetwork.com/*",
         "*://www.thenude.com/*",
         "*://xcity.jp/*",
         "*://xslist.org/*",

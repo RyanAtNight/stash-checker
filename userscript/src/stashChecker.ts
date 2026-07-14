@@ -18,8 +18,6 @@ export async function runStashChecker() {
 
     switch (window.location.host) {
         case "www.iwara.tv": {
-            // TODO translate to graphql filter
-            //(d: any) => d.files.some((f: any) => f.path.endsWith("_Source.mp4")) ? "green" : "blue"
             // Video code in the URL
             let codeRegex = /(?<=video\/)([a-zA-Z0-9]+)(?=\/|$)/
             // Cut URL after code off
@@ -42,13 +40,11 @@ export async function runStashChecker() {
             break;
         }
         case "oreno3d.com": {
-            //(d: any) => d.files.some((f: any) => f.path.endsWith("_Source.mp4")) ? "green" : "blue"
             check(Target.Scene, "h1.video-h1", {urlSelector: currentSite, titleSelector: null});
             check(Target.Scene, "a h2.box-h2", {titleSelector: null});
             break;
         }
         case "erommdtube.com": {
-            //(d: any) => d.files.some((f: any) => f.path.endsWith("_Source.mp4")) ? "green" : "blue"
             check(Target.Scene, "h1.show__h1", {urlSelector: currentSite, titleSelector: null});
             check(Target.Scene, "h2.main__list-title", {titleSelector: null});
             break;
@@ -163,6 +159,96 @@ export async function runStashChecker() {
             check(Target.Performer, "a[href*='/person.rme/id=']");
             check(Target.Scene, "a[href*='/title.rme/id=']");
             check(Target.Studio, "a[href*='/studio.rme/studio=']");
+            break;
+        }
+        case "www.imdb.com": {
+            if (window.location.pathname.startsWith("/title/")) {
+                // Scene page
+                check(Target.Scene, "[data-testid='hero__pageTitle'] > span[data-testid='hero__primary-text']", {
+                    urlSelector: _ => currentSite().substringBefore("?")
+                });
+            } else if (window.location.pathname.startsWith("/name/")) {
+                // Person page
+                check(Target.Performer, "[data-testid='hero__pageTitle'] > span[data-testid='hero__primary-text']", {
+                    urlSelector: _ => currentSite().substringBefore("?")
+                });
+            }
+            // Featured today
+            check(Target.Scene, "a.ipc-slate-card__title[data-testid='title']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // More like this
+            check(Target.Scene, "a > span[data-testid='title']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // All cast
+            check(Target.Performer, "li[data-testid='name-credits-list-item'] a[href^='/name/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Top Cast
+            check(Target.Performer, "a[data-testid='title-cast-item__actor'][href^='/name/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Details People list
+            check(Target.Performer, "li[data-testid='title-pc-principal-credit'] > div a[href^='/name/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Born Today
+            check(Target.Performer, "div[data-testid='name-born-today-card']", {
+                observe: true,
+                displaySelector: e => e.querySelector("div[data-testid='born-today-name']"),
+                nameSelector: e => e.querySelector("div[data-testid='born-today-name']")?.textContent?.trim(),
+                urlSelector: e => e.querySelector("a")?.href?.substringBefore("?"),
+            });
+            // Trending People
+            check(Target.Performer, "div[data-testid='popular-celebrity-card']", {
+                observe: true,
+                displaySelector: e => e.querySelector("div[data-testid='popular-celebrity-name-text']"),
+                nameSelector: e => e.querySelector("div[data-testid='popular-celebrity-name-text']")?.textContent?.trim(),
+                urlSelector: e => e.querySelector("a")?.href?.substringBefore("?"),
+            });
+            // Recently Viewed (Scene)
+            check(Target.Scene, "div[data-testid='shoveler-items-container'] > div > a[href^='/title/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Recently Viewed (Person)
+            check(Target.Performer, "div[data-testid='shoveler-items-container'] > div > a[href^='/name/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Top box office
+            check(Target.Scene, "div[data-testid='feature-row-top-box-office'] a[href^='/title/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Coming Soon
+            check(Target.Scene, "div.ipc-slate-card__content > div > a[href^='/title/']", {
+                observe: true,
+                displaySelector: e => e.querySelector("div.ipc-slate-card__title-text"),
+                nameSelector: e => e.querySelector("div.ipc-slate-card__title-text")?.textContent?.trim(),
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Person - Upcoming, Previous
+            check(Target.Scene, "a.ipc-metadata-list-summary-item__t[href^='/title/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Personal Details
+            check(Target.Performer, "a.ipc-metadata-list-item__list-content-item--link[href^='/name/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
+            // Known for
+            check(Target.Scene, "a.ipc-primary-image-list-card__title[href^='/title/']", {
+                observe: true,
+                urlSelector: e => closestUrl(e)?.substringBefore("?")
+            });
             break;
         }
         case "javdb.com": {
@@ -289,22 +375,18 @@ export async function runStashChecker() {
             break;
         }
         case "www.manyvids.com": {
-            check(Target.Studio, "[class^='ProfileAboutMeUI_stageName_']", {
+            check(Target.Studio, "h1", {
                 observe: true,
                 urlSelector: currentSite,
             });
-            check(Target.Studio, "[class^='VideoProfileCard_actions_'] a[href^='/Profile/'], [class^='CardCreatorHeaderUI_creatorInfo_'] a[href^='/Profile/']", {
+            check(Target.Studio, "a[href^='/Profile/']", {
                 observe: true,
                 urlSelector: e => closestUrl(e)?.replace(/Store\/Videos$/, ""),
             });
-            check(Target.Scene, "h1[class^='VideoMetaInfo_title_']", {
+            check(Target.Scene, "a[href^='/Video/']", {
                 observe: true,
-                urlSelector: currentSite,
-                codeSelector: _ => window.location.pathname.split("/")[2]
-            });
-            check(Target.Scene, "[class^='VideoCardUI_videoTitle_'] a[href^='/Video/']", {
-                observe: true,
-                codeSelector: e => e.getAttribute("href")?.split("/")?.[2]
+                codeSelector: e => e.getAttribute("href")?.split("/")?.[2],
+                urlSelector: e => e.getAttribute("href")
             });
             break;
         }
@@ -601,6 +683,32 @@ export async function runStashChecker() {
 				titleSelector: e => (e.querySelector('.details strong') ?? e.closest('.item')?.querySelector('h5'))?.textContent?.trim(),
 				displaySelector: e => e.querySelector('.details strong') ?? e.closest('.item')?.querySelector('h5') as Element | undefined
 			});
+            break;
+        }
+        case "puffynetwork.com":
+        case "www.puffynetwork.com":
+        case "members.puffynetwork.com": {
+            // Detail page — scene title heading; strip fragment so #set on gallery view doesn't break matching
+            check(Target.Scene, "h2.title span", {
+                observe: true,
+                urlSelector: _ => currentSite().substringBefore('#')
+            });
+            // Figure cards — performer, name from <a title="...">
+            check(Target.Performer, "figure a[href*='/girls/']", {
+                observe: true,
+                nameSelector: e => e.getAttribute("title"),
+                displaySelector: e => e.closest("figure")?.querySelector("figcaption > strong")
+            });
+            // Scene listing cards — image-wrapper link, title from sibling text node
+            check(Target.Scene, "a.image-wrapper[href^='/videos/']", {
+                observe: true,
+                titleSelector: e => directChildTextNode(e.closest("li")?.querySelector("strong.col-xs-7"))?.textContent?.trim(),
+                displaySelector: e => directChildTextNode(e.closest("li")?.querySelector("strong.col-xs-7"))
+            });
+            // Scene listing cards — in-card performer link
+            check(Target.Performer, "strong.col-xs-7 a[href*='/girls/']", {
+                observe: true
+            });
             break;
         }
         case "www.pornteengirl.com": {

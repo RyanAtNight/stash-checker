@@ -12,28 +12,13 @@ jobs:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/build-userscript
 
-      - name: Get version from tag
-        id: tag_name
-        run: |
-          echo ::set-output name=current_version::${GITHUB_REF#refs/tags/v}
-        shell: bash
-
-      - name: Get Changelog Entry
-        id: changelog_reader
-        uses: mindsers/changelog-reader-action@v2
-        with:
-          validation_level: warn
-          version: ${{ steps.tag_name.outputs.current_version }}
-          path: ./CHANGELOG.md
-
       - name: Release
         uses: softprops/action-gh-release@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: userscript/dist/index.prod.*
-          tag_name: ${{ steps.changelog_reader.outputs.version }}
-          name: Release ${{ steps.changelog_reader.outputs.version }}
-          body: ${{ steps.changelog_reader.outputs.changes }}
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ github.ref_name }}
           fail_on_unmatched_files: true
           generate_release_notes: true

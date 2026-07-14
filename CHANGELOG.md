@@ -1,6 +1,12 @@
 
 ## [WIP]
 
+## [1.2.4.1]
+
+- Merge upstream Stash Checker 1.2.4 into the RyanAtNight fork
+- Add Pornolab scene matching with URL and multiple title fallback strategies
+- Publish userscript updates from the RyanAtNight fork
+
 ## [1.2.4]
 
 - Add IMDB
